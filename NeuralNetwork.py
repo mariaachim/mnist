@@ -1,3 +1,5 @@
+import base64
+from io import BytesIO
 import numpy as np
 import matplotlib.pyplot as plt
 import keras
@@ -15,6 +17,7 @@ class NeuralNetwork:
         np.random.seed(0)
         print(self.x_train.shape, self.y_train.shape)
         print(self.x_test.shape, self.y_test.shape)
+        
     def prepareTrainingData(self):
         self.y_train = keras.utils.to_categorical(self.y_train, self.num_classes)
         self.y_test = keras.utils.to_categorical(self.y_test, self.num_classes)
@@ -27,6 +30,7 @@ class NeuralNetwork:
         self.x_train = self.x_train.reshape(self.x_train.shape[0], -1)
         self.x_test = self.x_test.reshape(self.x_test.shape[0], -1)
         print("training data prepared")
+
     def create(self):
         self.model = Sequential()
         self.model.add(Dense(units=128, input_shape=(784,), activation='relu'))
@@ -39,18 +43,22 @@ class NeuralNetwork:
 
         self.model.summary()
         print("model created")
+
     def train(self):
         batch_size = 512
         epochs = 10
         self.model.fit(x = self.x_train, y = self.y_train, batch_size = 512, epochs = 10)
         test_loss, test_acc = self.model.evaluate(self.x_test, self.y_test)
         print("Test Loss: {}, Test Accuracy: {}".format(test_loss, test_acc))
+
     def predictImages(self):
         f, ax = plt.subplots(1, self.num_classes, figsize=(20, 20))
         for i in range(self.num_classes):
             sample = self.x_train[self.y_train == i][0]
-            ax[i].imshow(sample, cmap = 'gray')
             ax[i].set_title("Label: {}".format(i), fontsize=16)
+            ax[i].imshow(sample, cmap = 'gray')
+        return f.savefig("static/images/predict-images.png")
+
     def evaluate(self):
         test_loss, test_acc = self.model.evaluate(self.x_test, self.y_test)
         print("Test Loss: {}, Test Accuracy: {}".format(test_loss, test_acc))
@@ -59,13 +67,14 @@ class NeuralNetwork:
         y_pred_classes = np.argmax(self.y_pred, axis=1)
         print(self.y_pred)
         print(y_pred_classes)
+        
     def predictSingle(self):
         self.y_pred = self.model.predict(self.x_test)
         self.y_pred_classes = np.argmax(self.y_pred, axis=1)
         random_idx = random.randint(0, len(self.x_test) - 1)
         x_sample = self.x_test[random_idx]
         print(self.y_test)
-        self.y_true = np.argmax(self.y_test, axis=1)   #### error here
+        self.y_true = np.argmax(self.y_test, axis=1)
         print(self.y_true)     
         y_sample_true = self.y_true[random_idx]
         y_sample_pred_class = self.y_pred_classes[random_idx]
@@ -76,7 +85,12 @@ class NeuralNetwork:
 
         self.model.summary()
 
+        return fig.savefig("static/images/predict-random-image.png")
+
     def confusionMatrix(self):
+        self.y_true = np.argmax(self.y_test, axis=1)
+        self.y_pred_classes = np.argmax(self.y_pred, axis=1)
+
         confusion_mtx = confusion_matrix(self.y_true, self.y_pred_classes)
 
         fig, ax = plt.subplots(figsize = (15, 10))
@@ -84,8 +98,13 @@ class NeuralNetwork:
         ax.set_xlabel("Predicted Label")
         ax.set_ylabel("True Label")
         ax.set_title("Confusion Matrix")
+        
+        return fig.savefig("static/images/confusion-matrix.png")
 
     def showErrors(self):
+        self.y_pred = self.model.predict(self.x_test)
+        self.y_pred_classes = np.argmax(self.y_pred, axis=1)
+        self.y_true = np.argmax(self.y_test, axis=1)
         # investigating errors
         errors = (self.y_pred_classes - self.y_true != 0) # predicted classes are not the same as actual classes
         y_pred_classes_errors = self.y_pred_classes[errors]
@@ -113,7 +132,9 @@ class NeuralNetwork:
             ax[i].imshow(sample, cmap='gray')
             ax[i].set_title("Predicted Label: {}\nTrue Label: {}".format(y_p, y_t), fontsize=12)
 
+        f.savefig("static/images/show-errors.png")
 
+'''
 nn = NeuralNetwork(10)
 nn.create()
 nn.predictImages()
@@ -123,5 +144,6 @@ nn.evaluate()
 nn.predictSingle()
 nn.confusionMatrix()
 nn.showErrors()
+'''
 
-plt.show()
+#plt.show()
